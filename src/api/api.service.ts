@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetLastRateDto } from './dto/get-last-rate.dto';
+import * as moment from 'moment';
 
 @Injectable()
 export class ApiService {
@@ -11,7 +12,8 @@ export class ApiService {
 
   private readonly logger = new Logger('Probando logger');
 
-  @Cron(CronExpression.EVERY_6_HOURS, {
+  // @Cron(CronExpression.EVERY_6_HOURS, {
+  @Cron(CronExpression.EVERY_10_SECONDS, {
     name: 'getting-rates',
     timeZone: 'America/Lima',
   })
@@ -38,16 +40,19 @@ export class ApiService {
             try {
               const [date, cost, sale] = res.data.split('|', 3);
 
+              const prismadate = moment(date, 'DD/MM/YYYY').toDate();
+              const strdate = moment(date, 'DD/MM/YYYY').format('YYYY-MM-DD');
+
               const has_changed = await this.prisma.rate.findFirst({
-                where: { date: new Date(date), cost, sale },
+                where: { date: prismadate, cost, sale },
               });
               if (!has_changed) {
                 await this.prisma.rate.create({
-                  data: { date: new Date(date), cost, sale },
+                  data: { date: prismadate, cost, sale },
                 });
               }
 
-              return { date: this.formatDate(date), cost, sale };
+              return { date: strdate, cost, sale };
             } catch (error) {
               throw new Error(error);
             }
@@ -71,7 +76,7 @@ export class ApiService {
       console.log(rate);
 
       return {
-        date: this.formatDate(rate[0].date),
+        date: this.formatDateString(rate[0].date),
         cost: rate[0].cost,
         sale: rate[0].sale,
       };
@@ -80,13 +85,16 @@ export class ApiService {
     }
   }
 
-  async getRates(take: number, skip: number, strdate: string) {
+  async getRates(take: number, skip: number, searchdate: string) {
     try {
+      const prismadate = moment(searchdate, 'YYYY-MM-DD').toDate();
+      const strdate = moment(searchdate, 'YYYY-MM-DD').format('YYYY-MM-DD');
+
       const rates = await this.prisma.rate.findMany({
         take,
         skip,
         where: {
-          date: new Date(strdate),
+          date: prismadate,
           // date: {
           //   lte: new Date('2023-03-23'),
           //   gte: new Date('2023-03-23'),
@@ -96,7 +104,7 @@ export class ApiService {
         select: { date: true, cost: true, sale: true },
       });
       return rates.map((rate) => ({
-        date: this.formatDate(rate.date),
+        date: strdate,
         cost: rate.cost,
         sale: rate.sale,
       }));
@@ -105,7 +113,18 @@ export class ApiService {
     }
   }
 
-  formatDate(date: any) {
+  formatStringDate(val: any) {
+    const date = new Date(val);
+    const finalDate =
+      date.getFullYear() +
+      '-' +
+      ('0' + (date.getMonth() + 1)).slice(-2) +
+      '-' +
+      ('0' + (date.getDate() + 1)).slice(-2);
+    return finalDate;
+  }
+
+  formatDateString(date: any) {
     const finalDate =
       date.getFullYear() +
       '-' +
