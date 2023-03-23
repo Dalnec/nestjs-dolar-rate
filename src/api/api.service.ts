@@ -12,8 +12,7 @@ export class ApiService {
 
   private readonly logger = new Logger('Probando logger');
 
-  // @Cron(CronExpression.EVERY_6_HOURS, {
-  @Cron(CronExpression.EVERY_10_SECONDS, {
+  @Cron(CronExpression.EVERY_6_HOURS, {
     name: 'getting-rates',
     timeZone: 'America/Lima',
   })
