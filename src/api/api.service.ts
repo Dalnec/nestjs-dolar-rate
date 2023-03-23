@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetLastRateDto } from './dto/get-last-rate.dto';
+import * as moment from 'moment';
 
 @Injectable()
 export class ApiService {
@@ -68,6 +69,8 @@ export class ApiService {
         take: 1,
         select: { date: true, cost: true, sale: true },
       });
+      console.log(rate);
+
       return {
         date: this.formatDate(rate[0].date),
         cost: rate[0].cost,
@@ -78,14 +81,38 @@ export class ApiService {
     }
   }
 
-  formatDate(val: any) {
-    const date = new Date(val);
+  async getRates(take: number, skip: number, strdate: string) {
+    try {
+      const rates = await this.prisma.rate.findMany({
+        take,
+        skip,
+        where: {
+          date: new Date(strdate),
+          // date: {
+          //   lte: new Date('2023-03-23'),
+          //   gte: new Date('2023-03-23'),
+          // },
+        },
+        orderBy: { id: 'desc' },
+        select: { date: true, cost: true, sale: true },
+      });
+      return rates.map((rate) => ({
+        date: this.formatDate(rate.date),
+        cost: rate.cost,
+        sale: rate.sale,
+      }));
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  formatDate(date: any) {
     const finalDate =
       date.getFullYear() +
       '-' +
       ('0' + (date.getMonth() + 1)).slice(-2) +
       '-' +
-      ('0' + date.getDate()).slice(-2);
+      ('0' + (date.getDate() + 1)).slice(-2);
     return finalDate;
   }
 }

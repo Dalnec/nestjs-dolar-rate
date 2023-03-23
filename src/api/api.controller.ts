@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, DefaultValuePipe, Get, Query } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { ApiService } from './api.service';
 import { GetLastRateDto } from './dto/get-last-rate.dto';
@@ -19,6 +19,15 @@ export class ApiController {
   @Get()
   getRate() {
     return this.apiService.getRate();
+  }
+
+  @Get('list')
+  getRates(
+    @Query('take') take: number,
+    @Query('skip') skip: number,
+    @Query('date', new DefaultValuePipe('')) date: string,
+  ) {
+    return this.apiService.getRates(+take, +skip, date);
   }
 
   @Get('/control/')
