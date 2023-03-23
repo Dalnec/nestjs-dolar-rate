@@ -4,7 +4,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetLastRateDto } from './dto/get-last-rate.dto';
-import * as moment from 'moment';
 
 @Injectable()
 export class ApiService {
