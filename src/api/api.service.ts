@@ -89,6 +89,7 @@ export class ApiService {
       const prismadate = moment(searchdate, 'YYYY-MM-DD').toDate();
       // const strdate = moment(searchdate, 'YYYY-MM-DD').format('YYYY-MM-DD');
 
+      const totalrates = await this.prisma.rate.findMany();
       const rates = await this.prisma.rate.findMany({
         take,
         skip,
@@ -104,11 +105,13 @@ export class ApiService {
       });
       console.log(rates);
 
-      return rates.map((rate) => ({
+      const data = rates.map((rate) => ({
         date: moment(rate.date, 'YYYY-MM-DD').format('YYYY-MM-DD'),
         cost: rate.cost,
         sale: rate.sale,
       }));
+
+      return { count: totalrates.length, data };
     } catch (error) {
       throw new Error(error);
     }
