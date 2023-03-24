@@ -87,13 +87,13 @@ export class ApiService {
   async getRates(take: number, skip: number, searchdate: string) {
     try {
       const prismadate = moment(searchdate, 'YYYY-MM-DD').toDate();
-      const strdate = moment(searchdate, 'YYYY-MM-DD').format('YYYY-MM-DD');
+      // const strdate = moment(searchdate, 'YYYY-MM-DD').format('YYYY-MM-DD');
 
       const rates = await this.prisma.rate.findMany({
         take,
         skip,
         where: {
-          date: prismadate,
+          date: searchdate !== '' ? prismadate : undefined,
           // date: {
           //   lte: new Date('2023-03-23'),
           //   gte: new Date('2023-03-23'),
@@ -102,8 +102,10 @@ export class ApiService {
         orderBy: { id: 'desc' },
         select: { date: true, cost: true, sale: true },
       });
+      console.log(rates);
+
       return rates.map((rate) => ({
-        date: strdate,
+        date: moment(rate.date, 'YYYY-MM-DD').format('YYYY-MM-DD'),
         cost: rate.cost,
         sale: rate.sale,
       }));
